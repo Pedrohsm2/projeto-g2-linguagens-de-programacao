@@ -4,418 +4,933 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# -------------------------
+COR_AZUL = "#1976D2"
+COR_VERDE = "#2E7D32"
+COR_VERMELHO = "#C62828"
+COR_ROXO = "#6A1B9A"
+
+
+
+# ==================================================
 # CONFIGURAÇÃO DA PÁGINA
-# -------------------------
+# ==================================================
 
 st.set_page_config(
-    page_title='Indicadores de Saúde Pública no Brasil',
-    layout='wide'
+    page_title="Indicadores de Saúde Pública no Brasil",
+    page_icon="🏥",
+    layout="wide"
 )
 
-# -------------------------
-# TÍTULO
-# -------------------------
 
-st.title('📊 Indicadores de Saúde Pública no Brasil')
+
+# ==================================================
+# ESTILO VISUAL
+# ==================================================
 
 st.markdown("""
-Este dashboard apresenta uma análise dos principais indicadores de saúde pública no Brasil entre os anos de 2015 e 2024.
+<style>
 
-Foram analisados indicadores relacionados à:
-- mortalidade;
-- expectativa de vida;
-- cobertura vacinal;
-- infraestrutura hospitalar;
-- internações.
+/* FUNDO */
+.stApp {
+    background-color: #F4F8F5;
+}
 
-O objetivo do projeto é identificar padrões, tendências e relações entre os indicadores de saúde pública nas regiões brasileiras.
-""")
+/* SIDEBAR */
+section[data-testid="stSidebar"] {
+    background-color: #2E7D32;
+}
 
-# -------------------------
+section[data-testid="stSidebar"] * {
+    color: white;
+}
+
+/* TÍTULOS */
+h1, h2, h3 {
+    color: #1B5E20 !important;
+}
+
+/* KPI */
+[data-testid="stMetric"] {
+    background: white;
+    border-radius: 15px;
+    padding: 18px;
+    border-left: 8px solid #43A047;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* DATAFRAME */
+[data-testid="stDataFrame"] {
+    background: white;
+    border-radius: 12px;
+}
+
+/* LINHAS DIVISÓRIAS */
+hr {
+    border: none;
+    border-top: 1px solid #D6EAD8;
+}
+
+/* CONTAINER */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+
+/* Chips dos multiselects */
+.stMultiSelect [data-baseweb="tag"] {
+    background-color: #2E7D32 !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Texto dentro do chip */
+.stMultiSelect [data-baseweb="tag"] span {
+    color: white !important;
+}
+
+/* X de remover */
+.stMultiSelect [data-baseweb="tag"] svg {
+    fill: white !important;
+}
+
+/* Campo do multiselect */
+.stMultiSelect div[data-baseweb="select"] > div {
+    background-color: white !important;
+    color: black !important;
+}
+            
+            /* Títulos da sidebar */
+
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p {
+    color: white !important;
+}
+
+            
+
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# ==================================================
 # LEITURA DOS DADOS
-# -------------------------
+# ==================================================
 
-df = pd.read_csv('dados/simulacao_saude_publica_brasil.csv')
+@st.cache_data
+def carregar_dados():
 
-# -------------------------
+    df = pd.read_csv(
+        "dados/simulacao_saude_publica_brasil.csv"
+    )
+
+    df["data"] = pd.to_datetime(df["data"])
+
+    return df
+
+
+df = carregar_dados()
+
+# ==================================================
 # SIDEBAR
-# -------------------------
+# ==================================================
 
-st.sidebar.title('🏥 Saúde Pública')
+st.sidebar.title("🏥 Saúde Pública")
 
 pagina = st.sidebar.radio(
-    'Navegação',
+    "Navegação",
     [
-        '🏠 Visão Geral',
-        '❤️ Expectativa de Vida',
-        '📉 Mortalidade',
-        '💉 Vacinação',
-        '🏥 Infraestrutura',
-        '🔍 Correlações',
-        '📋 Tabela Dinâmica',
-        '📝 Conclusão'
+        "🏠 Visão Geral",
+        "❤️ Expectativa de Vida",
+        "📉 Mortalidade",
+        "💉 Vacinação",
+        "🏥 Infraestrutura",
+        "🔍 Correlações",
+        "📋 Tabela Dinâmica",
+        "📝 Conclusão Executiva"
     ]
 )
 
 st.sidebar.divider()
 
-st.sidebar.subheader('Filtros')
+st.sidebar.subheader("Filtros")
 
 regioes = st.sidebar.multiselect(
-    'Região',
-    options=sorted(df['regiao'].unique()),
-    default=sorted(df['regiao'].unique())
-)
-
-anos = st.sidebar.multiselect(
-    'Ano',
-    options=sorted(df['ano'].unique()),
-    default=sorted(df['ano'].unique())
+    "Região",
+    options=sorted(df["regiao"].unique()),
+    default=sorted(df["regiao"].unique())
 )
 
 ufs = st.sidebar.multiselect(
-    'UF',
-    options=sorted(df['uf'].unique()),
-    default=sorted(df['uf'].unique())
+    "UF",
+    options=sorted(df["uf"].unique()),
+    default=sorted(df["uf"].unique())
 )
 
-# -------------------------
-# FILTROS
-# -------------------------
+anos = st.sidebar.multiselect(
+    "Ano",
+    options=sorted(df["ano"].unique()),
+    default=sorted(df["ano"].unique())
+)
+
+# ==================================================
+# FILTRO PRINCIPAL
+# ==================================================
 
 df_filtrado = df[
-    (df['regiao'].isin(regioes)) &
-    (df['ano'].isin(anos)) &
-    (df['uf'].isin(ufs))
+    (df["regiao"].isin(regioes))
+    &
+    (df["uf"].isin(ufs))
+    &
+    (df["ano"].isin(anos))
 ]
 
-# -------------------------
-# VISÃO GERAL
-# -------------------------
+# ==================================================
+# PÁGINA INICIAL
+# ==================================================
 
-if pagina == '🏠 Visão Geral':
-
-    st.header('📊 Visão Geral')
+if pagina == "🏠 Visão Geral":
 
     st.markdown("""
-    Este dashboard apresenta uma análise dos principais indicadores de saúde pública
-    no Brasil entre 2015 e 2024.
+# 🏥 Saúde Pública no Brasil
 
-    A análise contempla expectativa de vida, mortalidade, vacinação,
-    infraestrutura hospitalar e internações, permitindo identificar padrões
-    regionais e tendências ao longo do tempo.
-    """)
+### Dashboard de Indicadores (2015–2024)
+""")
+
 
     st.divider()
 
-    col1, col2, col3, col4 = st.columns(4)
+    st.subheader("📈 Indicadores-Chave (KPIs)")
+
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.metric(
-            'Expectativa de Vida Média',
+            "Expectativa Média de Vida",
             f"{df_filtrado['expectativa_vida'].mean():.2f}"
         )
 
     with col2:
         st.metric(
-            'Cobertura Vacinal Média',
-            f"{df_filtrado['cobertura_vacinal'].mean():.2f}%"
+            "Taxa Média de Mortalidade",
+            f"{df_filtrado['taxa_mortalidade'].mean():.2f}"
         )
 
     with col3:
         st.metric(
-            'Média de Leitos',
-            f"{df_filtrado['leitos_hospitalares'].mean():.2f}"
+            "Cobertura Vacinal Média",
+            f"{df_filtrado['cobertura_vacinal'].mean():.2f}%"
         )
+
+    col4, col5, col6 = st.columns(3)
 
     with col4:
         st.metric(
-            'Taxa Média de Internação',
+            "Média de Leitos",
+            f"{df_filtrado['leitos_hospitalares'].mean():.0f}"
+        )
+
+    with col5:
+        st.metric(
+            "Taxa Média de Internação",
             f"{df_filtrado['taxa_internacao'].mean():.2f}"
+        )
+
+    with col6:
+
+        estado_critico = (
+            df_filtrado
+            .groupby("uf")["taxa_mortalidade"]
+            .mean()
+            .sort_values(ascending=False)
+            .index[0]
+        )
+
+        st.metric(
+            "UF Mais Vulnerável",
+            estado_critico
         )
 
     st.divider()
 
-    st.subheader('Resumo Executivo')
+    st.subheader("📋 Base de Dados")
+
+    st.dataframe(
+        df_filtrado.head(20),
+        use_container_width=True
+    )
+
+    st.divider()
+
+    st.subheader("📌 Resumo Executivo")
 
     st.info("""
-    Utilize os filtros laterais para explorar os indicadores de saúde pública
-    por região, estado e período. As demais seções apresentam análises
-    específicas sobre expectativa de vida, mortalidade, vacinação,
-    infraestrutura hospitalar e correlações entre os indicadores.
+    Utilize os filtros laterais para explorar os indicadores por região, estado e período.
+
+    As páginas seguintes apresentam análises detalhadas de expectativa de vida, mortalidade, vacinação, infraestrutura hospitalar, correlações estatísticas e uma conclusão executiva baseada nos resultados obtidos.
     """)
 
-# -------------------------
-# PÁGINAS FUTURAS
-# -------------------------
+    # ==================================================
+# EXPECTATIVA DE VIDA
+# ==================================================
 
-elif pagina == '❤️ Expectativa de Vida':
+elif pagina == "❤️ Expectativa de Vida":
 
-    st.header('❤️ Expectativa de Vida')
+    st.title("❤️ Expectativa de Vida")
 
-    exp_vida = (
+    media_ano = (
         df_filtrado
-        .groupby('ano')['expectativa_vida']
+        .groupby("ano")["expectativa_vida"]
         .mean()
         .reset_index()
     )
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(12,6))
 
     sns.lineplot(
-        data=exp_vida,
-        x='ano',
-        y='expectativa_vida',
-        marker='o',
+        data=media_ano,
+        x="ano",
+        y="expectativa_vida",
+        marker="o",
         linewidth=3,
-        color='#1E88E5',
+        color=COR_AZUL,
         ax=ax
     )
 
-    ax.set_title('Evolução da Expectativa de Vida')
-    ax.set_xlabel('Ano')
-    ax.set_ylabel('Expectativa de Vida')
+    ax.set_title(
+        "Evolução da Expectativa de Vida no Brasil",
+        fontsize=16,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Ano")
+    ax.set_ylabel("Expectativa de Vida")
+
+    ax.grid(
+        True,
+        linestyle="--",
+        alpha=0.5
+    )
+
+    ax.set_ylim(72,75)
 
     st.pyplot(fig)
 
     st.markdown("""
     ### Interpretação
 
-    O gráfico demonstra que a expectativa de vida no Brasil apresentou oscilações ao longo do período analisado, sem uma tendência contínua de crescimento.
+    O gráfico demonstra que a expectativa de vida no Brasil apresentou oscilações ao longo do período entre 2015 e 2024.
 
-    O maior valor médio foi observado em 2018. A partir desse período ocorre uma redução do indicador, com queda mais perceptível entre 2020 e 2022.
+    Observa-se crescimento até 2018, ano em que foi registrado o maior valor médio.
 
-    Essa diminuição pode estar relacionada aos impactos da pandemia da COVID-19, que elevou os índices de mortalidade e afetou diretamente a expectativa de vida da população.
+    Após esse período ocorre uma redução do indicador, especialmente entre 2020 e 2022.
 
-    Embora haja uma leve recuperação em alguns momentos posteriores, o indicador encerra o período analisado abaixo do pico registrado em 2018.
+    Esse comportamento pode estar relacionado aos impactos da pandemia da COVID-19 sobre os indicadores de saúde da população.
     """)
 
-elif pagina == '📉 Mortalidade':
+# ==================================================
+# MORTALIDADE
+# ==================================================
 
-    st.header('📉 Mortalidade')
+elif pagina == "📉 Mortalidade":
 
-    # -------------------------
+    st.title("📉 Mortalidade")
+
+    # --------------------------------------------
     # Mortalidade por Região
-    # -------------------------
+    # --------------------------------------------
 
-    st.subheader('Taxa Média de Mortalidade por Região')
+    st.subheader("Taxa Média de Mortalidade por Região")
 
     mortalidade_regiao = (
         df_filtrado
-        .groupby('regiao')['taxa_mortalidade']
+        .groupby("regiao")["taxa_mortalidade"]
         .mean()
+        .sort_values(ascending=False)
         .reset_index()
-        .sort_values('taxa_mortalidade', ascending=False)
     )
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(10,6))
 
     sns.barplot(
         data=mortalidade_regiao,
-        x='regiao',
-        y='taxa_mortalidade',
-        color='#E53935',
+        x="regiao",
+        y="taxa_mortalidade",
+        hue="regiao",
+        palette="Blues",
+        legend=False,
         ax=ax
     )
 
-    ax.set_xlabel('Região')
-    ax.set_ylabel('Taxa de Mortalidade')
-    ax.set_title('Taxa Média de Mortalidade por Região')
-
-    st.pyplot(fig)
-
-    st.markdown("""
-    **Interpretação**
-
-    O gráfico evidencia diferenças regionais nos níveis médios de mortalidade. As regiões com valores mais elevados apresentam maior impacto dos fatores associados à saúde pública, enquanto regiões com taxas menores demonstram indicadores relativamente mais favoráveis.
-
-    Essas diferenças reforçam a importância da análise regional para compreender desigualdades na oferta de serviços de saúde e nas condições de vida da população.
-    """)
-
-    st.divider()
-
-    # -------------------------
-    # Evolução Temporal
-    # -------------------------
-
-    st.subheader('Evolução Temporal da Mortalidade')
-
-    mortalidade_ano = (
-        df_filtrado
-        .groupby('ano')['taxa_mortalidade']
-        .mean()
-        .reset_index()
-    )
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-
-    sns.lineplot(
-        data=mortalidade_ano,
-        x='ano',
-        y='taxa_mortalidade',
-        marker='o',
-        linewidth=3,
-        color='#E53935',
-        ax=ax
-    )
-
-    ax.set_xlabel('Ano')
-    ax.set_ylabel('Taxa de Mortalidade')
-    ax.set_title('Evolução da Taxa Média de Mortalidade')
-
-    st.pyplot(fig)
-
-    st.markdown("""
-    **Interpretação**
-
-    Observa-se uma variação da mortalidade ao longo do período analisado, incluindo um pico em 2018. Após esse período, os valores apresentam oscilações sem tendência contínua de crescimento.
-
-    O comportamento do indicador demonstra que fatores epidemiológicos, socioeconômicos e estruturais podem influenciar a mortalidade de forma diferente em cada período analisado.
-    """)
-
-elif pagina == '💉 Vacinação':
-
-    st.header('💉 Cobertura Vacinal')
-
-    # -------------------------
-    # Cobertura por Região
-    # -------------------------
-
-    st.subheader('Cobertura Vacinal Média por Região')
-
-    vac_regiao = (
-        df_filtrado
-        .groupby('regiao')['cobertura_vacinal']
-        .mean()
-        .reset_index()
-        .sort_values('cobertura_vacinal', ascending=False)
-    )
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-
-    sns.barplot(
-        data=vac_regiao,
-        x='regiao',
-        y='cobertura_vacinal',
-        color='#43A047',
-        ax=ax
-    )
-
-    ax.set_xlabel('Região')
-    ax.set_ylabel('Cobertura Vacinal (%)')
-    ax.set_title('Cobertura Vacinal Média por Região')
-
-    st.pyplot(fig)
-
-    st.markdown("""
-    **Interpretação**
-
-    Observam-se diferenças relativamente pequenas entre as regiões, indicando uma distribuição relativamente equilibrada da cobertura vacinal no país.
-
-    Ainda assim, algumas regiões apresentam desempenho superior, demonstrando maior alcance das campanhas de imunização.
-    """)
-
-    st.divider()
-
-    # -------------------------
-    # Vacinação x Mortalidade
-    # -------------------------
-
-    st.subheader('Relação entre Vacinação e Mortalidade')
-
-    relacao = (
-        df_filtrado
-        .groupby('regiao')[['cobertura_vacinal', 'taxa_mortalidade']]
-        .mean()
-        .reset_index()
-    )
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-
-    sns.scatterplot(
-        data=relacao,
-        x='cobertura_vacinal',
-        y='taxa_mortalidade',
-        s=150,
-        color='#43A047',
-        ax=ax
-    )
-
-    for _, row in relacao.iterrows():
+    for i, v in enumerate(
+        mortalidade_regiao["taxa_mortalidade"]
+    ):
         ax.text(
-            row['cobertura_vacinal'],
-            row['taxa_mortalidade'],
-            row['regiao']
+            i,
+            v + 0.02,
+            f"{v:.2f}",
+            ha="center",
+            fontsize=10
         )
 
-    ax.set_xlabel('Cobertura Vacinal (%)')
-    ax.set_ylabel('Taxa de Mortalidade')
-    ax.set_title('Vacinação x Mortalidade')
+    ax.set_title(
+        "Taxa Média de Mortalidade por Região",
+        fontsize=16,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Região")
+    ax.set_ylabel("Taxa Média de Mortalidade")
+
+    ax.set_ylim(0,10)
+
+    ax.grid(
+        axis="y",
+        linestyle="--",
+        alpha=0.3
+    )
 
     st.pyplot(fig)
 
     st.markdown("""
-    **Interpretação**
+    ### Interpretação
 
-    A comparação entre vacinação e mortalidade evidencia que regiões com maior cobertura vacinal nem sempre apresentam as maiores taxas de mortalidade.
+    As regiões Centro-Oeste e Sudeste apresentam os maiores índices médios de mortalidade.
 
-    O resultado sugere que a mortalidade é influenciada por diversos fatores além da vacinação, como infraestrutura de saúde, condições socioeconômicas e perfil demográfico da população.
+    O Nordeste apresenta o menor valor médio observado.
+
+    Apesar das diferenças, os valores permanecem relativamente próximos, indicando certa uniformidade nacional no indicador.
     """)
 
     st.divider()
 
-    # -------------------------
-    # Top Estados
-    # -------------------------
+    # --------------------------------------------
+    # Evolução Temporal da Mortalidade
+    # --------------------------------------------
 
-    st.subheader('Top 10 Estados com Maior Cobertura Vacinal')
+    st.subheader("Evolução Temporal da Mortalidade")
 
-    top_estados = (
+    temporal_mortalidade = (
         df_filtrado
-        .groupby('uf')['cobertura_vacinal']
+        .groupby("ano")["taxa_mortalidade"]
         .mean()
         .reset_index()
-        .sort_values('cobertura_vacinal', ascending=False)
-        .head(10)
     )
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(12,6))
 
-    sns.barplot(
-        data=top_estados,
-        x='cobertura_vacinal',
-        y='uf',
-        color='#43A047',
+    sns.lineplot(
+        data=temporal_mortalidade,
+        x="ano",
+        y="taxa_mortalidade",
+        marker="o",
+        linewidth=3,
+        color=COR_VERMELHO,
         ax=ax
     )
 
-    ax.set_xlabel('Cobertura Vacinal (%)')
-    ax.set_ylabel('UF')
-    ax.set_title('Estados com Maior Cobertura Vacinal')
+    for _, row in temporal_mortalidade.iterrows():
+
+        ax.text(
+            row["ano"],
+            row["taxa_mortalidade"] + 0.02,
+            f"{row['taxa_mortalidade']:.2f}",
+            ha="center",
+            fontsize=9
+        )
+
+    ax.set_title(
+        "Evolução Temporal da Taxa de Mortalidade",
+        fontsize=16,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Ano")
+    ax.set_ylabel("Taxa Média de Mortalidade")
+
+    ax.set_ylim(
+        temporal_mortalidade["taxa_mortalidade"].min() - 0.2,
+        temporal_mortalidade["taxa_mortalidade"].max() + 0.2
+    )
+
+    ax.grid(
+        True,
+        linestyle="--",
+        alpha=0.4
+    )
 
     st.pyplot(fig)
 
     st.markdown("""
-    **Interpretação**
+    ### Interpretação
 
-    Os estados presentes no topo do ranking apresentam os maiores níveis médios de cobertura vacinal do período analisado.
+    O gráfico apresenta oscilações da mortalidade ao longo da série histórica.
 
-    O resultado evidencia diferenças entre unidades federativas e demonstra a importância das estratégias regionais para ampliar o alcance da imunização.
+    O principal pico ocorre em 2018.
+
+    Também são observadas elevações próximas ao período da pandemia da COVID-19.
+
+    O comportamento demonstra como eventos epidemiológicos podem impactar diretamente os indicadores de saúde pública.
     """)
 
-elif pagina == '🏥 Infraestrutura':
-    st.header('🏥 Infraestrutura')
-    st.write('Em construção.')
+    st.divider()
 
-elif pagina == '🔍 Correlações':
-    st.header('🔍 Correlações')
-    st.write('Em construção.')
+    st.subheader("📋 Tabela de Mortalidade por Região")
 
-elif pagina == '📋 Tabela Dinâmica':
-    st.header('📋 Tabela Dinâmica')
-    st.write('Em construção.')
+    tabela_mortalidade = (
+        df_filtrado
+        .groupby("regiao")["taxa_mortalidade"]
+        .mean()
+        .reset_index()
+        .sort_values(
+            by="taxa_mortalidade",
+            ascending=False
+        )
+    )
 
-elif pagina == '📝 Conclusão':
-    st.header('📝 Conclusão')
-    st.write('Em construção.')
+    st.dataframe(
+        tabela_mortalidade,
+        use_container_width=True
+    )
+
+    # ==================================================
+# VACINAÇÃO
+# ==================================================
+
+elif pagina == "💉 Vacinação":
+
+    st.title("💉 Cobertura Vacinal")
+
+    # --------------------------------------------
+    # Cobertura Vacinal por Região
+    # --------------------------------------------
+
+    st.subheader("Cobertura Vacinal Média por Região")
+
+    vacina_regiao = (
+        df_filtrado
+        .groupby("regiao")["cobertura_vacinal"]
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    fig, ax = plt.subplots(figsize=(10,6))
+
+    sns.barplot(
+        data=vacina_regiao,
+        x="regiao",
+        y="cobertura_vacinal",
+        hue="regiao",
+        palette="Greens",
+        legend=False,
+        ax=ax
+    )
+
+    for i, v in enumerate(
+        vacina_regiao["cobertura_vacinal"]
+    ):
+        ax.text(
+            i,
+            v + 0.05,
+            f"{v:.2f}",
+            ha="center",
+            fontsize=10
+        )
+
+    ax.set_title(
+        "Cobertura Vacinal Média por Região",
+        fontsize=16,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Região")
+    ax.set_ylabel("Cobertura Vacinal (%)")
+
+    ax.set_ylim(72,75)
+
+    ax.grid(
+        axis="y",
+        linestyle="--",
+        alpha=0.3
+    )
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    ### Interpretação
+
+    A região Norte apresenta a maior cobertura vacinal média.
+
+    Sul e Sudeste apresentam os menores valores médios.
+
+    Apesar disso, a diferença entre regiões é relativamente pequena,
+    demonstrando estabilidade nacional da vacinação.
+    """)
+
+    st.divider()
+
+    # --------------------------------------------
+    # Vacinação x Mortalidade
+    # --------------------------------------------
+
+    st.subheader("Relação entre Vacinação e Mortalidade")
+
+    vacina_mortalidade = (
+        df_filtrado
+        .groupby("regiao")[
+            ["cobertura_vacinal", "taxa_mortalidade"]
+        ]
+        .mean()
+        .reset_index()
+    )
+
+    fig, ax = plt.subplots(figsize=(10,6))
+
+    sns.scatterplot(
+        data=vacina_mortalidade,
+        x="cobertura_vacinal",
+        y="taxa_mortalidade",
+        hue="regiao",
+        s=300,
+        ax=ax
+    )
+
+    for i in range(len(vacina_mortalidade)):
+
+        ax.text(
+            vacina_mortalidade["cobertura_vacinal"][i] + 0.02,
+            vacina_mortalidade["taxa_mortalidade"][i],
+            vacina_mortalidade["regiao"][i],
+            fontsize=10
+        )
+
+    ax.set_title(
+        "Relação entre Cobertura Vacinal e Mortalidade",
+        fontsize=16,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Cobertura Vacinal Média (%)")
+    ax.set_ylabel("Taxa Média de Mortalidade")
+
+    ax.grid(
+        True,
+        linestyle="--",
+        alpha=0.5
+    )
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    ### Interpretação
+
+    Os dados sugerem que regiões com menores índices de vacinação
+    tendem a apresentar mortalidade mais elevada.
+
+    Entretanto, a vacinação não é o único fator que influencia
+    os indicadores de mortalidade.
+
+    Infraestrutura hospitalar, acesso à saúde e fatores
+    socioeconômicos também possuem impacto relevante.
+    """)
+
+    st.divider()
+
+    # --------------------------------------------
+    # Top 10 Estados
+    # --------------------------------------------
+
+    st.subheader(
+        "Top 10 Estados com Maior Cobertura Vacinal"
+    )
+
+    vacinacao_estado = (
+        df_filtrado
+        .groupby("uf")["cobertura_vacinal"]
+        .mean()
+        .sort_values(ascending=False)
+        .head(10)
+        .reset_index()
+    )
+
+    fig, ax = plt.subplots(figsize=(12,6))
+
+    sns.barplot(
+        data=vacinacao_estado,
+        x="uf",
+        y="cobertura_vacinal",
+        hue="uf",
+        palette="Greens_r",
+        legend=False,
+        ax=ax
+    )
+
+    for i, v in enumerate(
+        vacinacao_estado["cobertura_vacinal"]
+    ):
+        ax.text(
+            i,
+            v + 0.03,
+            f"{v:.2f}",
+            ha="center",
+            fontsize=10
+        )
+
+    ax.set_title(
+        "Top 10 Estados com Maior Cobertura Vacinal",
+        fontsize=16,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Estado")
+    ax.set_ylabel("Cobertura Vacinal Média (%)")
+
+    ax.set_ylim(
+        vacinacao_estado["cobertura_vacinal"].min() - 0.3,
+        vacinacao_estado["cobertura_vacinal"].max() + 0.3
+    )
+
+    ax.grid(
+        axis="y",
+        linestyle="--",
+        alpha=0.4
+    )
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    ### Interpretação
+
+    Os estados apresentados registram os maiores índices
+    médios de vacinação do período analisado.
+
+    As diferenças são pequenas, demonstrando elevado nível
+    de cobertura vacinal entre os líderes do ranking.
+    """)
+
+# ==================================================
+# INFRAESTRUTURA
+# ==================================================
+
+elif pagina == "🏥 Infraestrutura":
+
+    st.title("🏥 Infraestrutura Hospitalar")
+
+    infraestrutura = (
+        df_filtrado
+        .groupby("regiao")["leitos_hospitalares"]
+        .mean()
+        .sort_values(ascending=False)
+        .reset_index()
+    )
+
+    fig, ax = plt.subplots(figsize=(10,6))
+
+    sns.barplot(
+        data=infraestrutura,
+        x="regiao",
+        y="leitos_hospitalares",
+        hue="regiao",
+        palette="Purples",
+        legend=False,
+        ax=ax
+    )
+
+    for i, v in enumerate(
+        infraestrutura["leitos_hospitalares"]
+    ):
+        ax.text(
+            i,
+            v + 20,
+            f"{v:.0f}",
+            ha="center",
+            fontsize=10
+        )
+
+    ax.set_title(
+        "Média de Leitos Hospitalares por Região",
+        fontsize=16,
+        fontweight="bold"
+    )
+
+    ax.set_xlabel("Região")
+    ax.set_ylabel("Quantidade Média de Leitos")
+
+    ax.set_ylim(5700,6200)
+
+    ax.grid(
+        axis="y",
+        linestyle="--",
+        alpha=0.4
+    )
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    ### Interpretação
+
+    A distribuição dos leitos hospitalares não ocorre de forma
+    completamente uniforme entre as regiões brasileiras.
+
+    Regiões com maior disponibilidade de leitos possuem
+    maior capacidade potencial de atendimento hospitalar.
+
+    A infraestrutura é um dos fatores fundamentais para
+    resposta a crises sanitárias e aumento da qualidade
+    dos serviços de saúde.
+    """)
+
+    st.divider()
+
+    st.subheader("Resumo da Infraestrutura")
+
+    st.dataframe(
+        infraestrutura,
+        use_container_width=True
+    )
+
+    # ==================================================
+# CORRELAÇÕES
+# ==================================================
+
+elif pagina == "🔍 Correlações":
+
+    st.title("🔍 Correlações entre Indicadores")
+
+    corr = (
+        df_filtrado
+        .select_dtypes(include=np.number)
+        .corr()
+    )
+
+    fig, ax = plt.subplots(figsize=(14,8))
+
+    sns.heatmap(
+        corr,
+        annot=True,
+        cmap="RdBu_r",
+        fmt=".2f",
+        linewidths=0.5,
+        square=True,
+        cbar_kws={"label":"Correlação"},
+        ax=ax
+    )
+
+    ax.set_title(
+        "Correlação entre Indicadores de Saúde Pública",
+        fontsize=16,
+        fontweight="bold",
+        pad=20
+    )
+
+    plt.xticks(rotation=45, ha="right")
+    plt.yticks(rotation=0)
+
+    st.pyplot(fig)
+
+    st.markdown("""
+    ### Interpretação
+
+    O heatmap demonstra que a expectativa de vida apresenta correlação negativa com a taxa de mortalidade.
+
+    Também é possível observar uma relação negativa entre cobertura vacinal e mortalidade.
+
+    Esses resultados sugerem que melhores indicadores preventivos tendem a estar associados a melhores condições gerais de saúde da população.
+
+    Algumas variáveis apresentam correlação fraca, indicando influência de fatores adicionais não presentes no dataset.
+    """)
+
+# ==================================================
+# TABELA DINÂMICA
+# ==================================================
+
+elif pagina == "📋 Tabela Dinâmica":
+
+    st.title("📋 Tabela Dinâmica")
+
+    tabela_dinamica = (
+        df_filtrado.pivot_table(
+            values="taxa_mortalidade",
+            index="regiao",
+            columns="ano",
+            aggfunc="mean"
+        )
+        .round(2)
+    )
+
+    st.subheader(
+        "Taxa Média de Mortalidade por Região e Ano"
+    )
+
+    st.dataframe(
+        tabela_dinamica,
+        use_container_width=True
+    )
+
+    st.markdown("""
+    ### Interpretação
+
+    O Centro-Oeste e o Sudeste apresentam alguns dos maiores índices médios de mortalidade ao longo da série histórica.
+
+    Também é possível observar aumentos em períodos específicos, especialmente próximos a eventos epidemiológicos relevantes.
+
+    Norte e Nordeste frequentemente apresentam valores inferiores quando comparados às demais regiões.
+
+    Os resultados reforçam a importância de análises regionais para o planejamento de políticas públicas de saúde.
+    """)
+
+# ==================================================
+# CONCLUSÃO EXECUTIVA
+# ==================================================
+
+elif pagina == "📝 Conclusão Executiva":
+
+    st.title("📝 Conclusão Executiva")
+
+    st.success("""
+    A análise dos indicadores de saúde pública no Brasil permitiu identificar padrões importantes relacionados à mortalidade, vacinação, expectativa de vida e infraestrutura hospitalar entre 2015 e 2024.
+    """)
+
+    st.subheader("Principais Achados")
+
+    st.markdown("""
+    ✅ Centro-Oeste e Sudeste apresentaram os maiores índices médios de mortalidade.
+
+    ✅ Norte apresentou a maior cobertura vacinal média.
+
+    ✅ Expectativa de vida apresentou oscilações ao longo da série histórica.
+
+    ✅ Os indicadores sofreram impactos relevantes próximos ao período da pandemia da COVID-19.
+
+    ✅ A infraestrutura hospitalar apresenta diferenças regionais que podem impactar a capacidade de atendimento.
+
+    ✅ Existe relação negativa entre vacinação e mortalidade, embora outros fatores também influenciem os resultados.
+    """)
+
+    st.subheader("Conclusão")
+
+    st.markdown("""
+    Os resultados demonstram que a saúde pública brasileira apresenta diferenças regionais relevantes que devem ser consideradas no planejamento de políticas públicas.
+
+    A vacinação mostrou-se um importante indicador preventivo, enquanto a infraestrutura hospitalar permanece como elemento fundamental para suporte ao sistema de saúde.
+
+    A análise temporal evidenciou como eventos epidemiológicos podem impactar diretamente indicadores populacionais como mortalidade e expectativa de vida.
+
+    O projeto permitiu aplicar técnicas de tratamento, análise e visualização de dados utilizando Python, Pandas, Matplotlib, Seaborn e Streamlit, transformando dados em informações úteis para apoio à tomada de decisão.
+    """)
+
+    st.divider()
+
+    st.info(
+        "Projeto G2 — Análise de Indicadores de Saúde Pública no Brasil"
+    )
