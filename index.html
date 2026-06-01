@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,22 +9,37 @@
 
 <style>
 
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
 body{
     font-family: Arial, sans-serif;
     background:#f4f8fb;
-    margin:0;
-    padding:0;
+    color:#333;
+    line-height:1.6;
 }
 
 header{
     background:#2E7D32;
     color:white;
-    padding:40px;
+    padding:60px 20px;
     text-align:center;
 }
 
+header h1{
+    font-size:2.5rem;
+    margin-bottom:10px;
+}
+
+header p{
+    font-size:1.1rem;
+}
+
 .container{
-    max-width:1000px;
+    max-width:1100px;
     margin:auto;
     padding:30px;
 }
@@ -31,13 +47,20 @@ header{
 .card{
     background:white;
     padding:25px;
-    margin-bottom:20px;
+    margin-bottom:25px;
     border-radius:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
 }
 
 h2{
     color:#2E7D32;
+    margin-bottom:15px;
+}
+
+.links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
 }
 
 .btn{
@@ -47,11 +70,32 @@ h2{
     color:white;
     text-decoration:none;
     border-radius:8px;
-    margin-right:10px;
+    transition:0.3s;
 }
 
 .btn:hover{
-    opacity:0.9;
+    background:#256428;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:15px;
+}
+
+.item{
+    background:#f8fdf8;
+    border-left:5px solid #2E7D32;
+    padding:15px;
+    border-radius:8px;
+}
+
+footer{
+    background:#1b5e20;
+    color:white;
+    text-align:center;
+    padding:20px;
+    margin-top:30px;
 }
 
 </style>
@@ -61,26 +105,79 @@ h2{
 <body>
 
 <header>
-    <h1>Projeto G2 — Saúde Pública no Brasil</h1>
-    <p>Análise de Indicadores de Saúde Pública utilizando Python e Streamlit</p>
+    <h1>🏥 Projeto G2 — Saúde Pública no Brasil</h1>
+    <p>
+        Análise Exploratória de Indicadores de Saúde Pública
+        utilizando Python, Pandas, Seaborn e Streamlit
+    </p>
 </header>
 
 <div class="container">
 
     <div class="card">
-        <h2>Objetivo</h2>
+        <h2>📌 Sobre o Projeto</h2>
 
         <p>
-        Este projeto realiza uma análise exploratória de indicadores
-        de saúde pública no Brasil entre 2015 e 2024.
-        Foram avaliados indicadores como expectativa de vida,
-        mortalidade, cobertura vacinal, internações e
-        infraestrutura hospitalar.
+            Este projeto tem como objetivo analisar indicadores de saúde pública
+            no Brasil entre os anos de 2015 e 2024.
+        </p>
+
+        <br>
+
+        <p>
+            Foram avaliadas informações relacionadas à expectativa de vida,
+            mortalidade, vacinação, internações e infraestrutura hospitalar,
+            buscando identificar padrões, tendências e diferenças regionais.
         </p>
     </div>
 
     <div class="card">
-        <h2>Tecnologias Utilizadas</h2>
+        <h2>🎯 Objetivos</h2>
+
+        <ul>
+            <li>Analisar indicadores de saúde pública brasileiros.</li>
+            <li>Comparar regiões do país.</li>
+            <li>Identificar tendências temporais.</li>
+            <li>Avaliar relações entre vacinação e mortalidade.</li>
+            <li>Construir visualizações interativas para apoio à análise.</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>📊 Indicadores Analisados</h2>
+
+        <div class="grid">
+
+            <div class="item">
+                ❤️ Expectativa de Vida
+            </div>
+
+            <div class="item">
+                📉 Taxa de Mortalidade
+            </div>
+
+            <div class="item">
+                💉 Cobertura Vacinal
+            </div>
+
+            <div class="item">
+                🏥 Leitos Hospitalares
+            </div>
+
+            <div class="item">
+                👨‍⚕️ Médicos por 1000 Habitantes
+            </div>
+
+            <div class="item">
+                📋 Taxa de Internação
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+        <h2>🛠 Tecnologias Utilizadas</h2>
 
         <ul>
             <li>Python</li>
@@ -89,25 +186,71 @@ h2{
             <li>Matplotlib</li>
             <li>Seaborn</li>
             <li>Streamlit</li>
+            <li>Git</li>
             <li>GitHub</li>
         </ul>
+
     </div>
 
     <div class="card">
-        <h2>Links do Projeto</h2>
 
-        <p>
-            <a class="btn" href="https://github.com/Pedrohsm2/projeto-g2-linguagens-de-programacao">
-                Repositório GitHub
+        <h2>📈 Principais Resultados</h2>
+
+        <ul>
+            <li>Identificação de diferenças regionais nos indicadores de saúde.</li>
+            <li>Relação entre cobertura vacinal e mortalidade.</li>
+            <li>Análise da evolução temporal da expectativa de vida.</li>
+            <li>Avaliação da infraestrutura hospitalar por região.</li>
+            <li>Construção de dashboard interativo para exploração dos dados.</li>
+        </ul>
+
+    </div>
+
+    <div class="card">
+
+        <h2>🔗 Links do Projeto</h2>
+
+        <div class="links">
+
+            <a class="btn"
+               href="https://projeto-g2-linguagens-de-programacaogit-7p3rbcxmfhplzdxgujbf5s.streamlit.app/"
+               target="_blank">
+               📊 Dashboard
             </a>
 
-            <a class="btn" href="https://projeto-g2-linguagens-de-programacaogit-7p3rbcxmfhplzdxgujbf5s.streamlit.app/">
-                Dashboard Streamlit
+            <a class="btn"
+               href="https://github.com/Pedrohsm2/projeto-g2-linguagens-de-programacao"
+               target="_blank">
+               💻 GitHub
             </a>
-        </p>
+
+            <a class="btn"
+               href="https://github.com/Pedrohsm2/projeto-g2-linguagens-de-programacao#readme"
+               target="_blank">
+               📘 README
+            </a>
+
+            <a class="btn"
+               href="https://github.com/Pedrohsm2/projeto-g2-linguagens-de-programacao/tree/main/notebooks"
+               target="_blank">
+               📓 Notebook
+            </a>
+
+            <a class="btn"
+               href="https://github.com/Pedrohsm2/projeto-g2-linguagens-de-programacao/raw/main/dados/simulacao_saude_publica_brasil.csv"
+               download="simulacao_saude_publica_brasil.csv">
+               💾 Base de Dados
+            </a>
+
+        </div>
+
     </div>
 
 </div>
+
+<footer>
+    Projeto G2 — Saúde Pública no Brasil | Pedro Moreira
+</footer>
 
 </body>
 </html>
